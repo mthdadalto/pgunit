@@ -193,106 +193,17 @@ $$ language sql;
 --
 create or replace function test_autonomous(p_statement VARCHAR) returns void as $$
 declare
-    l_error_text character varying;
-    l_error_detail character varying;
-    l_dblink_conn_extra character varying;
+  l_error_text character varying;
+  l_error_detail character varying;
 begin
-        begin
-	    select current_setting('pgunit.dblink_conn_extra') into l_dblink_conn_extra;
-        exception
-            when undefined_object then
-                select '' into l_dblink_conn_extra;
-        end;
-	perform test_dblink_connect('test_auto', 'dbname=' || current_catalog || ' ' || l_dblink_conn_extra);
-        begin
-            perform test_dblink_exec('test_auto', 'BEGIN WORK;');
-            perform test_dblink_exec('test_auto', p_statement);
-            perform test_dblink_exec('test_auto', 'COMMIT;');
-            perform test_dblink_disconnect('test_auto');
-        exception
-            when others then
-                get stacked diagnostics l_error_text = message_text,
-					l_error_detail = pg_exception_detail;
-                perform test_dblink_exec('test_auto', 'ROLLBACK;');
-                perform test_dblink_disconnect('test_auto');
-                raise exception '%: Error on executing: % % %', sqlstate, p_statement, l_error_text, l_error_detail 
-			using errcode = sqlstate;
-        end;
-end;
-$$ language plpgsql set search_path from current;
-
---
--- Calls dblink_connect taking into account the autodetected DBLINK schema
---
-create or replace function test_dblink_connect(text, text) returns text as $$
-declare
-	dblink_schema text := test_detect_dblink_schema();
-	dblink_result text;
-begin
-	execute format('select %s.dblink_connect_u($1, $2)', quote_ident(dblink_schema))
-	using $1, $2
-	into dblink_result;
-
-	return dblink_result;
-end
-$$ language plpgsql set search_path from current security definer;
-
---
--- Calls dblink_disconnect taking into account the autodetected DBLINK schema
---
-create or replace function test_dblink_disconnect(text) returns text as $$
-declare
-	dblink_schema text := test_detect_dblink_schema();
-	dblink_result text;
-begin
-	execute format('select %s.dblink_disconnect($1)', quote_ident(dblink_schema))
-	using $1
-	into dblink_result;
-
-	return dblink_result;
-end
-$$ language plpgsql set search_path from current;
-
---
--- Calls dblink_exec taking into account the autodetected DBLINK schema
---
-create or replace function test_dblink_exec(text, text) returns text as $$
-declare
-	dblink_schema text := test_detect_dblink_schema();
-	dblink_result text;
-begin
-	execute format('select %s.dblink_exec($1, $2)', quote_ident(dblink_schema))
-	using $1, $2
-	into dblink_result;
-
-	return dblink_result;
-end
-$$ language plpgsql set search_path from current;
-
---
--- Detects the schema where DBLINK extension is installed
--- Caches the result in the pgunit.dblink_schema setting per session
---
-create or replace function test_detect_dblink_schema() returns text as $$
-declare
-	schema_name text;
-begin
-	begin
-		select current_setting('pgunit.dblink_schema') into schema_name;
-		if schema_name is null or schema_name = '' then
-			raise exception undefined_object;
-		end if;
-	exception
-		when undefined_object then
-			select nspname
-			into schema_name
-			from pg_extension px
-				join pg_namespace pn on px.extnamespace = pn.oid
-			where extname = 'dblink'
-		    limit 1;
-		    perform set_config('pgunit.dblink_schema', schema_name, true);
-	end;
-	return schema_name;
+  execute p_statement;
+exception
+  when others then
+    get stacked diagnostics l_error_text = message_text,
+                            l_error_detail = pg_exception_detail;
+    rollback;
+    raise exception '%: Error on executing: % % %', sqlstate, p_statement, l_error_text, l_error_detail
+      using errcode = sqlstate;
 end;
 $$ language plpgsql set search_path from current;
 
