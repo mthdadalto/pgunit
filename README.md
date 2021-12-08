@@ -28,20 +28,20 @@ Using the built-in grouping mechanism you can re-use supporting code such as the
 
 ## Running one or more tests
 
-To run the entire test suite the 'test_run_all' stored procedure needs to be used:
+To run the entire test suite the 'pgunit.run_all' stored procedure needs to be used:
 ```sql
-select * from test_run_all();
+select * from pgunit.run_all();
 ```
-You can pick one or an entire group of tests based on their prefix using the 'test_run_suite' stored procedure:
+You can pick one or an entire group of tests based on their prefix using the 'pgunit.run_suite' stored procedure:
 ```sql
-select * from test_run_suite('finance');
+select * from pgunit.run_suite('finance');
 ```
 
 The statement above will pick up all unit tests starting with the 'test_case_finance' prefix together with the associated support functions and procedures.
 
-The select statement returns the type 'test_results', which is:
+The select statement returns the type 'pgunit.results', which is:
 ```sql
-create type test_results as (
+create type pgunit.results as (
   test_name varchar, 
   successful boolean, 
   failed boolean, 
@@ -52,22 +52,7 @@ create type test_results as (
 
 ## Setting up PGUnit
 
-If you want to set up PGUnit in a dedicated schema like 'pgunit', create it:
-```sql
-CREATE SCHEMA pgunit;
-```
-
-You should run the `PGUnit.sql` code using either the `psql` command line tool or a tool like PGAdmin 4's query tool and deploy it in the public schema of the selected database or a dedicated schema, such as `pgunit`. The code should be deployed as superuser, but can be used by ordinary users.
-
-A convenient way to install the PGUnit suite in a dedicated schema is to temporarily change the search path like this:
-```sql
-ALTER DATABASE my_db SET search_path TO pgunit;
-```
-run `PGUnit.sql`, and then reset the search_path. There is a good tip for this on Stack Exchange:
-https://dba.stackexchange.com/questions/145280/reset-search-path-to-the-global-cluster-default
-```sql
-ALTER DATABASE my_db RESET search_path;
-```
+You should run the `PGUnit.sql` code using either the `psql` command line tool or a tool like PGAdmin 4's query tool. It will automatically be deployed to the schema `pgunit`. The code should be deployed as superuser, but can be used by ordinary users.
 
 ## Removal
 The `PGUnitDrop.sql` has the code you can use to remove all `PGUnit` code from the database.
@@ -75,11 +60,11 @@ The `PGUnitDrop.sql` has the code you can use to remove all `PGUnit` code from t
 ## Assertion procedures
 | Procedure | Description |
 | --- | --- |
-|`test_assertTrue(message VARCHAR, condition BOOLEAN) returns void`|If condition is false it throws an exception with the given message|
-| `test_assertTrue(condition BOOLEAN) returns void` |Similar to `assertTrue` above but with no user message|
-|`test_assertNotNull(message VARCHAR, data ANYELEMENT) returns void`|If the data is null an exception is thrown with the message provided|
-|`test_assertNull(message VARCHAR, data ANYELEMENT) returns void`|If the data is not null an exception is thrown with the message provided|
-|`test_fail(message VARCHAR) returns void`|If reached, the test fails with the message provided|
+|`pgunit.assertTrue(message VARCHAR, condition BOOLEAN) returns void`|If condition is false it throws an exception with the given message|
+|`pgunit.assertTrue(condition BOOLEAN) returns void` |Similar to `assertTrue` above but with no user message|
+|`pgunit.assertNotNull(message VARCHAR, data ANYELEMENT) returns void`|If the data is null an exception is thrown with the message provided|
+|`pgunit.assertNull(message VARCHAR, data ANYELEMENT) returns void`|If the data is not null an exception is thrown with the message provided|
+|`pgunit.fail(message VARCHAR) returns void`|If reached, the test fails with the message provided|
 
 ## Examples
 
@@ -92,8 +77,8 @@ declare
   id BIGINT;
 begin
   SELECT customer.createUser(1, 100) INTO id;
-  perform test_assertNotNull('user not created', id);
-  perform test_assertTrue('user id range improper', id >= 10000);
+  perform pgunit.assertNotNull('user not created', id);
+  perform pgunit.assertTrue('user id range improper', id >= 10000);
 end;
 $$ language plpgsql;
 ```
@@ -114,35 +99,9 @@ The precondition above will be shared on all 'user' tests unless one with a more
 
 ### Lock issues
 Although the unit tests are run in autonomous transactions it is possible to run into lock issues and have the select statements above hanging. In this case have a new connection on the same database and issue the statement below to stop all locking sessions:
-select * from test_terminate('my_db_name');
+`select * from pgunit.terminate('my_db_name');`
 
 In order to find out which test is at issue you should run the suite one test at the time. The procedure above is not specific to PGUnit and can be used in general as well; it will terminate all locking sessions.
-
-### Install the code in public schema and switching to a different schema
-
-You can add the 'public' schema to the search path using the statement below:
-```sql
-SELECT set_config(
-    'search_path',
-    current_setting('search_path') || ',public',
-    false
-) WHERE current_setting('search_path') !~ '(^|,)public(,|$)';
-```
-
-### Installing the code in dedicated schema
-
-The framework can be installed in a dedicated schema, even if it is not present in the search_path, for example `pgunit`. In that case all calls to pgunit functions should be qualified with its installation schema name:
-```sql
-create or replace function test_case_user_create_1() returns void as $$
-declare
-  id BIGINT;
-begin
-  SELECT customer.createUser(1, 100) INTO id;
-  perform pgunit.test_assertNotNull('user not created', id);
-  perform pgunit.test_assertTrue('user id range improper', id >= 10000);
-end;
-$$ language plpgsql;
-```
 
 ---
 
