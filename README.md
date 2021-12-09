@@ -52,10 +52,17 @@ create type pgunit.results as (
 
 ## Setting up PGUnit
 
-You should run the `PGUnit.sql` code using either the `psql` command line tool or a tool like PGAdmin 4's query tool. It will automatically be deployed to the schema `pgunit`. The code should be deployed as superuser, but can be used by ordinary users.
+PGUnit is a Postgresql extension. In order to install it, move `pgunit--0.1.0.sql` and `pgunit.control` into your extension folder. On Unix, this can be done using `make`:
 
-## Removal
-The `PGUnitDrop.sql` has the code you can use to remove all `PGUnit` code from the database.
+``` sh
+sudo make install
+```
+
+After that, load PGUnit using:
+
+``` sql
+CREATE EXTENSION pgunit;
+```
 
 ## Assertion procedures
 | Procedure | Description |
