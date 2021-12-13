@@ -200,6 +200,9 @@ declare
 begin
   execute p_statement;
 exception
+ when triggered_action_exception then
+  raise exception 'Condition Failure' using errcode = 'triggered_action_exception';
+
   when others then
     get stacked diagnostics l_error_text = message_text,
                             l_error_detail = pg_exception_detail;
