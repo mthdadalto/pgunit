@@ -63,6 +63,14 @@ After that, load PGUnit using:
 ``` sql
 CREATE EXTENSION pgunit;
 ```
+### On Fedora
+
+If your postgresql-server-deveö doesn't supper pgxs, you have to install the following:
+
+``` sh
+sudo dnf install postgresql-contrib
+```
+
 
 ## Assertion procedures
 | Procedure | Description |
