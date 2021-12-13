@@ -63,14 +63,13 @@ After that, load PGUnit using:
 ``` sql
 CREATE EXTENSION pgunit;
 ```
-### On Fedora
 
-If your postgresql-server-deveö doesn't supper pgxs, you have to install the following:
+Please note, Postgresql Extensions have to be loaded by a Super-User.
 
-``` sh
-sudo dnf install postgresql-contrib
+If you need to test your pgunit functions as a non-Superuser, simply grant access.
+``` sql
+GRANT USAGE ON SCHEMA pgunit TO <normal-user>;
 ```
-
 
 ## Assertion procedures
 | Procedure | Description |
@@ -120,6 +119,13 @@ Although the unit tests are run in autonomous transactions it is possible to run
 
 In order to find out which test is at issue you should run the suite one test at the time. The procedure above is not specific to PGUnit and can be used in general as well; it will terminate all locking sessions.
 
+### On Fedora
+
+If your postgresql-server-deveö doesn't supper pgxs, you have to install the following:
+
+``` sh
+sudo dnf install postgresql-contrib
+```
 ---
 
 # Copyright and License
