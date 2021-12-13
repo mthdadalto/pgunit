@@ -69,6 +69,8 @@ CREATE EXTENSION pgunit;
 | --- | --- |
 |`pgunit.assertTrue(message VARCHAR, condition BOOLEAN) returns void`|If condition is false it throws an exception with the given message|
 |`pgunit.assertTrue(condition BOOLEAN) returns void` |Similar to `assertTrue` above but with no user message|
+|`pgunit.assertFalse(message VARCHAR, condition BOOLEAN) returns void`|If condition is true it throws an exception with the given message|
+|`pgunit.assertFalse(condition BOOLEAN) returns void` |Similar to `assertFalse` above but with no user message|
 |`pgunit.assertNotNull(message VARCHAR, data ANYELEMENT) returns void`|If the data is null an exception is thrown with the message provided|
 |`pgunit.assertNull(message VARCHAR, data ANYELEMENT) returns void`|If the data is not null an exception is thrown with the message provided|
 |`pgunit.fail(message VARCHAR) returns void`|If reached, the test fails with the message provided|
