@@ -229,6 +229,26 @@ begin
 end;
 $$ language plpgsql set search_path from current immutable;
 
+create or replace function @extschema@.assertFalse(message VARCHAR, condition BOOLEAN) returns void as $$
+begin
+  if not condition then
+    null;
+  else
+    raise exception 'assertFalse failure: %', message using errcode = 'triggered_action_exception';
+  end if;
+end;
+$$ language plpgsql set search_path from current immutable;
+
+create or replace function @extschema@.assertFalse(condition BOOLEAN) returns void as $$
+begin
+  if not condition then
+    null;
+  else
+    raise exception 'assertFalse failure' using errcode = 'triggered_action_exception';
+  end if;
+end;
+$$ language plpgsql set search_path from current immutable;
+
 create or replace function @extschema@.assertNotNull(VARCHAR, ANYELEMENT) returns void as $$
 begin
   if $2 IS NULL then
