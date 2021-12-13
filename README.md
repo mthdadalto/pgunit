@@ -121,7 +121,7 @@ In order to find out which test is at issue you should run the suite one test at
 
 ### On Fedora
 
-If your postgresql-server-deveö doesn't supper pgxs, you have to install the following:
+If your postgresql-server-devel doesn't support PGXS, you have to install the following:
 
 ``` sh
 sudo dnf install postgresql-contrib
