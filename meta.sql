@@ -1,7 +1,7 @@
 /*
  * PGUnit Integrity Test
  */
---@test1
+--@test1 -> true
 create function test_case_pgunit_integrity_check_true_is_true ()
   returns void
   as $$
@@ -13,7 +13,7 @@ end;
 $$
 language plpgsql;
 
---@test2
+--@test2 -> false
 create function test_case_pgunit_integrity_check_false_IsNot_True_not_Errnous ()
   returns void
   as $$
@@ -25,7 +25,7 @@ end;
 $$
 language plpgsql;
 
---@test3
+--@test3 -> erroneous
 create function test_case_pgunit_integrity_check_erroneous ()
   returns void
   as $$
