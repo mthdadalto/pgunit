@@ -1,4 +1,6 @@
-# PGUnit - unit test framework for Postgresql
+# PGUnit - Unit Test Framework for Postgresql (Extension)
+
+This is a fork of https://github.com/adrianandrei-ca/pgunit many thanks to the developers.
 
 The purpose of this suite of stored procedures is to allow a user to run unit tests as stored procedures.
 
@@ -49,8 +51,9 @@ create type pgunit.results as (
   error_message varchar,
   duration interval);
 ```
+## Installing PGUnit
 
-## Setting up PGUnit
+### Linux
 
 PGUnit is a Postgresql extension. In order to install it, move `pgunit--0.1.0.sql` and `pgunit.control` into your extension folder. On Unix, this can be done using `make`:
 
@@ -58,20 +61,30 @@ PGUnit is a Postgresql extension. In order to install it, move `pgunit--0.1.0.sq
 sudo make install
 ```
 
-After that, load PGUnit using:
+### Windows
 
+TODO
+
+### MacOS
+
+TODO
+
+## Setting up PGUnit
+
+After you successfully installed PGUnit like explained above, load PGUnit (as Superuser) using:
 ``` sql
-CREATE EXTENSION pgunit;
+create extension pgunit;
 ```
-
 Please note, Postgresql Extensions have to be loaded by a Super-User.
 
-If you need to test your pgunit functions as a non-Superuser, simply grant access.
+### Test as Non-Superuser
+If you want to test your pgunit functions as a non-Superuser, simply grant access.
 ``` sql
-GRANT USAGE ON SCHEMA pgunit TO <normal-user>;
+grant usage on schema pgunit to <normal-user>;
 ```
 
 ## Assertion procedures
+TODO
 | Procedure | Description |
 | --- | --- |
 |`pgunit.assertTrue(message VARCHAR, condition BOOLEAN) returns void`|If condition is false it throws an exception with the given message|
@@ -83,6 +96,8 @@ GRANT USAGE ON SCHEMA pgunit TO <normal-user>;
 |`pgunit.fail(message VARCHAR) returns void`|If reached, the test fails with the message provided|
 
 ## Examples
+
+We tested PGUnit with PGUnit itself, if you need more examples, please check the meta.sql, where you can find this tests.
 
 Test case that checks if an application user is created by a stored procedure
 - the user id is returned if user id 1 is a parent
