@@ -53,9 +53,18 @@ create type pgunit.results as (
 ```
 ## Installing PGUnit
 
+Simply download this repository or clone it directly with git
+``` sh
+git clone https://github.com/geometalab/pgunit.git
+```
 ### Linux
 
 PGUnit is a Postgresql extension. In order to install it, move `pgunit--0.1.0.sql` and `pgunit.control` into your extension folder. On Unix, this can be done using `make`:
+
+If not already, make the Makefile executable
+``` sh
+chmod u+x Makefile 
+```
 
 ``` sh
 sudo make install
