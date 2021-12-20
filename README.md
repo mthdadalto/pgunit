@@ -74,9 +74,13 @@ sudo make install
 
 Copy the `pgunit.control` and the `pgunit--0.1.0.sql` files into `C:\Program Files\Postgresql\VERSION\share\extension`, where `VERSION` is your postgresql version (e.g. `14`).
 
-### MacOS\
+### MacOS
 
-TODO
+You can use `make` in the cloned repo to install the extension to the correct location:
+
+```sh
+make install
+```
 
 ## Setting up PGUnit
 
