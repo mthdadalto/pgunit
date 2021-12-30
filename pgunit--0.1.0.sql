@@ -1,5 +1,5 @@
 -- complain if script is sourced in psql, rather than via CREATE EXTENSION
-\echo Use "CREATE EXTENSION pgunit" to load this file. \quit
+-- \echo Use "CREATE EXTENSION pgunit" to load this file. \quit
 create type @extschema@.results as (
   test_name varchar,
   successful boolean,
@@ -254,13 +254,14 @@ begin
   execute p_statement;
 exception
   when triggered_action_exception then
-      raise notice 'DBG0';
-    raise exception 'Condition Failure' using errcode = 'triggered_action_exception';
+  -- this is triggered when condition is false but should be true and vice versa
+  raise exception 'Condition Failure' using errcode = 'triggered_action_exception';
   when others then
-get stacked diagnostics l_error_text = message_text,
-l_error_detail = pg_exception_detail;
-raise warning '%', l_error_text;
+    get stacked diagnostics l_error_text = message_text,
+    l_error_detail = pg_exception_detail;
+  raise exception '%',l_error_text using errcode = 'syntax_error';
 rollback;
+  -- never actually reached
   raise exception '%: Error on executing: % % %', sqlstate, p_statement, l_error_text, l_error_detail using errcode = sqlstate;
 end;
 
@@ -353,12 +354,42 @@ set search_path
 from
   current immutable;
 
+create or replace function @extschema@.assertNotNull (ANYELEMENT)
+  returns void
+  as $$
+begin
+  if $2 is null then
+    raise exception 'assertNotNull failure'
+      using errcode = 'triggered_action_exception';
+    end if;
+end;
+$$
+language plpgsql
+set search_path
+from
+  current immutable;
+
 create or replace function @extschema@.assertNull (varchar, ANYELEMENT)
   returns void
   as $$
 begin
   if $2 is not null then
     raise exception 'assertNull failure: %', $1
+      using errcode = 'triggered_action_exception';
+    end if;
+end;
+$$
+language plpgsql
+set search_path
+from
+  current immutable;
+
+create or replace function @extschema@.assertNull (ANYELEMENT)
+  returns void
+  as $$
+begin
+  if $1 is not null then
+    raise exception 'assertNull failure'
       using errcode = 'triggered_action_exception';
     end if;
 end;

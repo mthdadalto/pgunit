@@ -91,9 +91,9 @@ create extension pgunit;
 Please note, Postgresql Extensions have to be loaded by a Super-User.
 
 ### Test as Non-Superuser
-If you want to test your pgunit functions as a non-Superuser, simply grant access.
+If you want to test your pgunit functions as a non-Superuser, simply grant access to special user PUBLIC.
 ``` sql
-grant usage on schema pgunit to <normal-user>;
+grant usage on schema pgunit to PUBLIC;
 ```
 
 ## Assertion procedures
