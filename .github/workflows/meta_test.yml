@@ -43,7 +43,7 @@ jobs:
 
       # queries database with postgres client
       - name: Query database
-        run: psql -h postgres -d postgres_db -U postgres_user -f meta.sql
+        run: psql -h postgres -d postgres_db -U postgres_user -c 'select 1;'
         env:
           # postgress password is required; alternatively, you can run:
           # `PGPASSWORD=postgres_password psql ...`
