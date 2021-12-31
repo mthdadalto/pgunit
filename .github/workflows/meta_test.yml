@@ -47,4 +47,4 @@ jobs:
         env:
           # postgress password is required; alternatively, you can run:
           # `PGPASSWORD=postgres_password psql ...`
-          PGPASSWORD: postgres
+          PGPASSWORD: postgres_password
