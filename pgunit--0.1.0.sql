@@ -1,5 +1,5 @@
 -- complain if script is sourced in psql, rather than via CREATE EXTENSION
--- \echo Use "CREATE EXTENSION pgunit" to load this file. \quit
+\echo Use "CREATE EXTENSION pgunit" to load this file. \quit
 create type @extschema@.results as (
   test_name varchar,
   successful boolean,
@@ -255,7 +255,7 @@ begin
 exception
   when triggered_action_exception then
   -- this is triggered when condition is false but should be true and vice versa
-  raise exception 'Condition Failure' using errcode = 'triggered_action_exception';
+  raise exception 'Condition Failure (or check pre-, post conditions)' using errcode = 'triggered_action_exception';
   when others then
     get stacked diagnostics l_error_text = message_text,
     l_error_detail = pg_exception_detail;
@@ -339,12 +339,12 @@ set search_path
 from
   current immutable;
 
-create or replace function @extschema@.assertNotNull (varchar, ANYELEMENT)
+create or replace function @extschema@.assertNotNull (message varchar, ANYELEMENT)
   returns void
   as $$
 begin
   if $2 is null then
-    raise exception 'assertNotNull failure: %', $1
+    raise exception 'assertNotNull failure: %', message
       using errcode = 'triggered_action_exception';
     end if;
 end;
@@ -385,6 +385,21 @@ from
   current immutable;
 
 create or replace function @extschema@.assertNull (ANYELEMENT)
+  returns void
+  as $$
+begin
+  if $1 is not null then
+    raise exception 'assertNull failure'
+      using errcode = 'triggered_action_exception';
+    end if;
+end;
+$$
+language plpgsql
+set search_path
+from
+  current immutable;
+
+create or replace function @extschema@.assertFound (ANYELEMENT)
   returns void
   as $$
 begin
