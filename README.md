@@ -1,8 +1,8 @@
-# PGUnit - Unit Test Framework for Postgresql (Extension)
+# PGUnit - Lightweight Unit Test Framework for PL/pgSQL (PostgreSQL Extension)
 
-This is a fork of https://github.com/adrianandrei-ca/pgunit many thanks to the developers.
+This is a fork of https://github.com/adrianandrei-ca/pgunit. Many thanks to the developers.
 
-The purpose of this suite of stored procedures is to allow a user to run unit tests as stored procedures.
+The purpose of this suite of stored procedures in PL/pgSQL is to allow a user to run unit tests on PL/pgSQL programs.
 
 The testing is based on a specific naming convention that allows automatic grouping of tests, setup, tear-downs, pre- and post- conditions.
 
@@ -14,9 +14,9 @@ Each unit test procedure name should have "test_case_" prefix in order to be ide
 - "test_teardown_": identifies a test tear down procedure.
 
 For each test case the following 3 transactions are executed:
-1. setup transaction: the setup procedure is searched based on the test name. If one is found it is executed in an autonomous transaction
-2. unit test transaction: the pre and post condition functions are searched based on the test name; if they are found the autonomous transaction will be: if the precondition is true (default if one is not found) the unit test is ran, then the postcondition function is evaluated (true if one is not found). If any condition returns false the test is failed
-3. tear down transaction: if a tear down procedure is found it is executed in an autonomous transaction indepedent of the unit test result.
+1. Setup transaction: the setup procedure is searched based on the test name. If one is found it is executed in an autonomous transaction
+2. Unit test transaction: the pre and post condition functions are searched based on the test name; if they are found the autonomous transaction will be: if the precondition is true (default if one is not found) the unit test is ran, then the postcondition function is evaluated (true if one is not found). If any condition returns false the test is failed
+3. Tear down transaction: if a tear down procedure is found it is executed in an autonomous transaction indepedent of the unit test result.
 
 A unit test execution can have 3 results: successful if the condition functions are true and the unit test procedure doesn't throw an exception, failed if there is an action exception triggered by a condition function or an assertion, and finally erroneous if any other exeception is triggered by any of the code above.
 
