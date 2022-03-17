@@ -97,7 +97,7 @@ grant usage on schema pgunit to PUBLIC;
 ```
 
 ## Assertion procedures
-TODO
+
 | Procedure | Description |
 | --- | --- |
 |`pgunit.assertTrue(message VARCHAR, condition BOOLEAN) returns void`|If condition is false it throws an exception with the given message|
