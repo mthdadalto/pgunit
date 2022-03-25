@@ -100,14 +100,14 @@ begin
       exception
         when triggered_action_exception then
           l_row.successful := false;
-      l_row.failed := true;
-      l_row.erroneous := false;
-      l_row.error_message := SQLERRM;
+          l_row.failed := true;
+          l_row.erroneous := false;
+          l_row.error_message := SQLERRM;
         when others then
           l_row.successful := false;
-      l_row.failed := false;
-      l_row.erroneous := true;
-      l_row.error_message := SQLERRM;
+          l_row.failed := false;
+          l_row.erroneous := true;
+          l_row.error_message := SQLERRM;
       end;
   l_row.duration = clock_timestamp() - l_start_ts;
   return next l_row;
@@ -251,15 +251,19 @@ declare
   l_error_text character varying;
   l_error_detail character varying;
 begin
+  set search_path to default;
   execute p_statement;
+  set search_path from current; -- TODO ugly
 exception
   when triggered_action_exception then
   -- this is triggered when condition is false but should be true and vice versa
-  raise exception 'Condition Failure (or check pre-, post conditions)' using errcode = 'triggered_action_exception';
+    set search_path from current; -- TODO ugly
+    raise exception 'Condition Failure (or check pre-, post conditions)' using errcode = 'triggered_action_exception';
   when others then
+    set search_path from current; -- TODO ugly
     get stacked diagnostics l_error_text = message_text,
     l_error_detail = pg_exception_detail;
-  raise exception '%',l_error_text using errcode = 'syntax_error';
+    raise exception '%',l_error_text using errcode = 'syntax_error';
 rollback;
   -- never actually reached
   raise exception '%: Error on executing: % % %', sqlstate, p_statement, l_error_text, l_error_detail using errcode = sqlstate;
