@@ -108,6 +108,8 @@ grant usage on schema pgunit to PUBLIC;
 |`pgunit.assertNull(message VARCHAR, data ANYELEMENT) returns void`|If the data is not null an exception is thrown with the message provided|
 |`pgunit.fail(message VARCHAR) returns void`|If reached, the test fails with the message provided|
 
+(Since Postgresql version 9.5 there is also an [ASSERT statement](https://www.postgresql.org/docs/current/plpgsql-errors-and-messages.html#PLPGSQL-STATEMENTS-ASSERT). Currently, using this is unsupported by this library.)
+
 ## Examples
 
 We tested PGUnit with PGUnit itself, if you need more examples, please check the meta.sql, where you can find this tests.
