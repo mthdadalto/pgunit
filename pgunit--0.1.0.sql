@@ -1,5 +1,3 @@
---CREATE EXTENSION pgunit;
-
 create type pgunit.results as (
   test_name varchar,
   successful boolean,
