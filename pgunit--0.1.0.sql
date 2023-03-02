@@ -1,6 +1,6 @@
--- complain if script is sourced in psql, rather than via CREATE EXTENSION
-\echo Use "CREATE EXTENSION pgunit" to load this file. \quit
-create type @extschema@.results as (
+--CREATE EXTENSION pgunit;
+
+create type pgunit.results as (
   test_name varchar,
   successful boolean,
   failed boolean,
@@ -12,15 +12,15 @@ create type @extschema@.results as (
 --
 -- Use select * from run_all() to execute all test cases
 --
-create or replace function @extschema@.run_all ()
-  returns setof @extschema@.results
+create or replace function pgunit.run_all ()
+  returns setof pgunit.results
   as $$
 begin
   return query
   select
     *
   from
-    @extschema@.run_suite (null);
+    pgunit.run_suite (null);
 end;
 $$
 language plpgsql
@@ -40,13 +40,13 @@ from
 --
 -- select * from run_suite('my_test'); will run all tests that will have
 -- 'test_case_my_test' prefix.
-create or replace function @extschema@.run_suite (p_suite text)
-  returns setof @extschema@.results
+create or replace function pgunit.run_suite (p_suite text)
+  returns setof pgunit.results
   as $$
 declare
   l_proc RECORD;
   l_sid integer;
-  l_row @extschema@.results%rowtype;
+  l_row pgunit.results%rowtype;
   l_start_ts timestamp;
   l_cmd text;
   l_condition text;
@@ -66,33 +66,33 @@ begin
   order by
     p.proname loop
       -- check for setup
-      l_condition := @extschema@.get_procname (l_proc.proname, 2, 'test_setup');
+      l_condition := pgunit.get_procname (l_proc.proname, 2, 'test_setup');
       if l_condition is not null then
-        l_cmd := 'DO $body$ begin perform ' || quote_ident(l_proc.nspname) || '.' || quote_ident(l_condition) || '(); end; $body$';
+        l_cmd := 'DO $body$ begin CALL ' || quote_ident(l_proc.nspname) || '.' || quote_ident(l_condition) || '(); end; $body$';
         perform
-          @extschema@.autonomous (l_cmd);
+          pgunit.autonomous (l_cmd);
       end if;
       l_row.test_name := quote_ident(l_proc.proname);
       -- check for precondition
-      l_condition := @extschema@.get_procname (l_proc.proname, 2, 'test_precondition');
+      l_condition := pgunit.get_procname (l_proc.proname, 2, 'test_precondition');
       if l_condition is not null then
-        l_precondition_cmd := 'perform @extschema@.run_condition(''' || quote_ident(l_proc.nspname) || '.' || quote_ident(l_condition) || '''); ';
+        l_precondition_cmd := 'CALL pgunit.run_condition(''' || quote_ident(l_proc.nspname) || '.' || quote_ident(l_condition) || '''); ';
       else
         l_precondition_cmd := '';
       end if;
       -- check for postcondition
-      l_condition := @extschema@.get_procname (l_proc.proname, 2, 'test_postcondition');
+      l_condition := pgunit.get_procname (l_proc.proname, 2, 'test_postcondition');
       if l_condition is not null then
-        l_postcondition_cmd := 'perform @extschema@.run_condition(''' || quote_ident(l_proc.nspname) || '.' || quote_ident(l_condition) || '''); ';
+        l_postcondition_cmd := 'CALL pgunit.run_condition(''' || quote_ident(l_proc.nspname) || '.' || quote_ident(l_condition) || '''); ';
       else
         l_postcondition_cmd := '';
       end if;
       -- execute the test
       l_start_ts := clock_timestamp();
       begin
-        l_cmd := 'DO $body$ begin ' || l_precondition_cmd || 'perform ' || quote_ident(l_proc.nspname) || '.' || quote_ident(l_proc.proname) || '(); ' || l_postcondition_cmd || ' end; $body$';
+        l_cmd := 'DO $body$ begin ' || l_precondition_cmd || 'CALL ' || quote_ident(l_proc.nspname) || '.' || quote_ident(l_proc.proname) || '(); ' || l_postcondition_cmd || ' end; $body$';
         perform
-          @extschema@.autonomous (l_cmd);
+          pgunit.autonomous (l_cmd);
         l_row.successful := true;
         l_row.failed := false;
         l_row.erroneous := false;
@@ -112,11 +112,11 @@ begin
   l_row.duration = clock_timestamp() - l_start_ts;
   return next l_row;
   -- check for teardown
-  l_condition := @extschema@.get_procname (l_proc.proname, 2, 'test_teardown');
+  l_condition := pgunit.get_procname (l_proc.proname, 2, 'test_teardown');
   if l_condition is not null then
-    l_cmd := 'DO $body$ begin perform ' || quote_ident(l_proc.nspname) || '.' || quote_ident(l_condition) || '(); end; $body$';
+    l_cmd := 'DO $body$ begin CALL ' || quote_ident(l_proc.nspname) || '.' || quote_ident(l_condition) || '(); end; $body$';
     perform
-      @extschema@.autonomous (l_cmd);
+      pgunit.autonomous (l_cmd);
     end if;
   end loop;
 end;
@@ -130,7 +130,7 @@ from
 --
 -- recreates a _ separated string from parts array
 --
-create or replace function @extschema@.build_procname (parts text[], p_from integer default 1, p_to integer default null)
+create or replace function pgunit.build_procname (parts text[], p_from integer default 1, p_to integer default null)
   returns text
   as $$
 declare
@@ -162,7 +162,7 @@ from
 --
 -- It returns the name of the first stored procedure present in the database
 --
-create or replace function @extschema@.get_procname (test_case_name text, expected_name_count integer, result_prefix text)
+create or replace function pgunit.get_procname (test_case_name text, expected_name_count integer, result_prefix text)
   returns text
   as $$
 declare
@@ -180,7 +180,7 @@ begin
   end loop;
   len := array_length(array_proc, 1);
   for idx in reverse len..1 loop
-    proc_name := result_prefix || '_' || @extschema@.build_procname (array_proc, 1, idx);
+    proc_name := result_prefix || '_' || pgunit.build_procname (array_proc, 1, idx);
     select
       1 into is_valid
     from
@@ -202,7 +202,7 @@ from
 --
 -- executes a condition boolean function
 --
-create or replace function @extschema@.run_condition (proc_name text)
+create or replace function pgunit.run_condition (proc_name text)
   returns void
   as $$
 declare
@@ -224,7 +224,7 @@ from
 --
 -- Use: select terminate('db name'); to terminate all locked processes
 --
-create or replace function @extschema@.terminate (db varchar)
+create or replace function pgunit.terminate (db varchar)
   returns setof record
   as $$
   select
@@ -244,7 +244,7 @@ language sql;
 -- Use: perform autonomous('UPDATE|INSERT|DELETE|SELECT sp() ...'); to
 -- change data in a separate transaction.
 --
-create or replace function @extschema@.autonomous (p_statement varchar)
+create or replace function pgunit.autonomous (p_statement varchar)
   returns void
   as $$
 declare
@@ -275,7 +275,7 @@ set search_path
 from
   current;
 
-create or replace function @extschema@.assertTrue (message varchar, condition boolean)
+create or replace function pgunit.assertTrue (message varchar, condition boolean)
   returns void
   as $$
 begin
@@ -292,7 +292,7 @@ set search_path
 from
   current immutable;
 
-create or replace function @extschema@.assertTrue (condition boolean)
+create or replace function pgunit.assertTrue (condition boolean)
   returns void
   as $$
 begin
@@ -309,7 +309,7 @@ set search_path
 from
   current immutable;
 
-create or replace function @extschema@.assertFalse (message varchar, condition boolean)
+create or replace function pgunit.assertFalse (message varchar, condition boolean)
   returns void
   as $$
 begin
@@ -326,7 +326,7 @@ set search_path
 from
   current immutable;
 
-create or replace function @extschema@.assertFalse (condition boolean)
+create or replace function pgunit.assertFalse (condition boolean)
   returns void
   as $$
 begin
@@ -343,7 +343,7 @@ set search_path
 from
   current immutable;
 
-create or replace function @extschema@.assertNotNull (message varchar, ANYELEMENT)
+create or replace function pgunit.assertNotNull (message varchar, ANYELEMENT)
   returns void
   as $$
 begin
@@ -358,7 +358,7 @@ set search_path
 from
   current immutable;
 
-create or replace function @extschema@.assertNotNull (ANYELEMENT)
+create or replace function pgunit.assertNotNull (ANYELEMENT)
   returns void
   as $$
 begin
@@ -373,7 +373,7 @@ set search_path
 from
   current immutable;
 
-create or replace function @extschema@.assertNull (varchar, ANYELEMENT)
+create or replace function pgunit.assertNull (varchar, ANYELEMENT)
   returns void
   as $$
 begin
@@ -388,7 +388,7 @@ set search_path
 from
   current immutable;
 
-create or replace function @extschema@.assertNull (ANYELEMENT)
+create or replace function pgunit.assertNull (ANYELEMENT)
   returns void
   as $$
 begin
@@ -403,7 +403,7 @@ set search_path
 from
   current immutable;
 
-create or replace function @extschema@.assertFound (ANYELEMENT)
+create or replace function pgunit.assertFound (ANYELEMENT)
   returns void
   as $$
 begin
@@ -418,7 +418,7 @@ set search_path
 from
   current immutable;
 
-create or replace function @extschema@.fail (varchar)
+create or replace function pgunit.fail (varchar)
   returns void
   as $$
 begin
