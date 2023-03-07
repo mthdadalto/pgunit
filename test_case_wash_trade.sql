@@ -186,6 +186,7 @@ LANGUAGE 'plpgsql'
 AS $BODY$
 declare
   _event RECORD;
+  _count INT;
 begin
 
     SELECT ae.*, a.name, a.token_id
@@ -198,8 +199,14 @@ begin
 
     CREATE TEMP TABLE tmp_events AS SELECT * FROM wash_trade(_event, true);
 
+    SELECT COUNT(*) 
+    FROM tmp_events 
+    CROSS JOIN LATERAL jsonb_object_keys(reason) AS first_key
+    WHERE first_key like 'bunched-transactions' 
+    INTO _count;
+
     perform pgunit.assertNotNull('event does not exists', _event);
-    perform pgunit.assertTrue('number of bunched events should be at least 1', (SELECT COUNT(*) FROM tmp_events WHERE reason like 'bunched-transactions-%') > 0);
+    perform pgunit.assertTrue('number of bunched events should be at least 1', _count > 0);
 
     DROP TABLE tmp_events;
 
@@ -216,6 +223,7 @@ LANGUAGE 'plpgsql'
 AS $BODY$
 declare
   _event RECORD;
+  _count INT;
 begin
 
     SELECT ae.*, a.name, a.token_id
@@ -229,12 +237,58 @@ begin
 
     CREATE TEMP TABLE tmp_events AS SELECT * FROM wash_trade(_event, true);
 
+    SELECT COUNT(*) 
+    FROM tmp_events 
+    CROSS JOIN LATERAL jsonb_object_keys(reason) AS first_key
+    WHERE first_key like 'bunched-transactions' 
+    INTO _count;
+
     perform pgunit.assertNotNull('event does not exists', _event);
-    perform pgunit.assertTrue('number of events should be 1', (SELECT COUNT(*) FROM tmp_events) < 6);
+    perform pgunit.assertTrue('number of events should NOT be higher than 0', _count < 1);
 
     DROP TABLE tmp_events;
 
 end;
 $BODY$;
 ALTER PROCEDURE pgunit.test_case_wash_trade_bunched_not_existing()
+    OWNER TO ebl_staging_o;
+
+-- PROCEDURE: pgunit.test_case_wash_trade_bunched_existing_fail()
+
+-- DROP PROCEDURE IF EXISTS pgunit.test_case_wash_trade_bunched_existing_fail();
+
+CREATE OR REPLACE PROCEDURE pgunit.test_case_wash_trade_bunched_existing_fail(
+	)
+LANGUAGE 'plpgsql'
+AS $BODY$
+declare
+  _event RECORD;
+  _count INT;
+begin
+
+    SELECT ae.*, a.name, a.token_id
+    FROM asset_event ae 
+    LEFT JOIN asset a ON a.id = ae.asset_id
+    WHERE
+		--wrong event
+        ae.event_hash = '0x03d1d3d11d7765c08353f46ccc13f9addf28ded0c986d61804cd20f5af2be54d'
+    LIMIT 1
+    INTO _event;
+
+    CREATE TEMP TABLE tmp_events AS SELECT * FROM wash_trade(_event, true);
+
+    SELECT COUNT(*) 
+    FROM tmp_events 
+    CROSS JOIN LATERAL jsonb_object_keys(reason) AS first_key
+    WHERE first_key like 'bunched-transactions' 
+    INTO _count;
+
+    perform pgunit.assertNotNull('event does not exists', _event);
+    perform pgunit.assertTrue('number of bunched events should be at least 1', _count > 0);
+
+    DROP TABLE tmp_events;
+
+end;
+$BODY$;
+ALTER PROCEDURE pgunit.test_case_wash_trade_bunched_existing_fail()
     OWNER TO ebl_staging_o;
