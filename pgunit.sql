@@ -1,3 +1,5 @@
+-- Version 0.1.1
+
 create type pgunit.results as (
   test_name varchar,
   successful boolean,
@@ -256,7 +258,8 @@ exception
   when triggered_action_exception then
   -- this is triggered when condition is false but should be true and vice versa
     set search_path from current; -- TODO ugly
-    raise exception 'Condition Failure (or check pre-, post conditions)' using errcode = 'triggered_action_exception';
+    get stacked diagnostics l_error_text = message_text;
+    raise exception '%',l_error_text using errcode = 'triggered_action_exception';
   when others then
     set search_path from current; -- TODO ugly
     get stacked diagnostics l_error_text = message_text,
