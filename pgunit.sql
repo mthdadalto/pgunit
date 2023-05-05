@@ -1,4 +1,5 @@
--- Version 0.1.1
+-- Version 0.1.2
+--CREATE EXTENSION pgunit;
 
 create type pgunit.results as (
   test_name varchar,
@@ -262,8 +263,7 @@ exception
     raise exception '%',l_error_text using errcode = 'triggered_action_exception';
   when others then
     set search_path from current; -- TODO ugly
-    get stacked diagnostics l_error_text = message_text,
-    l_error_detail = pg_exception_detail;
+    get stacked diagnostics l_error_text = message_text, l_error_detail = pg_exception_detail;
     raise exception '%',l_error_text using errcode = 'syntax_error';
 rollback;
   -- never actually reached
